@@ -1,6 +1,7 @@
 #ifndef _GAME_H
 #define _GAME_H
 
+#include <stdbool.h>
 #include "tile.h"
 
 // World
@@ -23,7 +24,7 @@ struct World {
 
 struct World* createWorld(int arenaWidth, int arenaHeight);
 
-int addPlayer(struct World* world, struct Player* player);
+bool addPlayer(struct World* world, struct Player* player);
 
 void updateWorld(struct World* world);
 
@@ -54,7 +55,7 @@ struct Player {
 
 	Direction direction;
 
-	int dead;
+	bool dead;
 
 	int score;
 
@@ -72,7 +73,7 @@ void setPlayerDirection(struct Player* player, Direction direction);
 
 void updatePlayer(struct Player* player);
 
-int isPlayerDead(struct Player* player);
+bool isPlayerDead(struct Player* player);
 
 int getPlayerScore(struct Player* player);
 

@@ -16,7 +16,7 @@ struct TileArena* createTileArena(int arenaWidth, int arenaHeight) {
 	return tileArena;
 }
 
-int isTilePointInBounds(struct TileArena* tileArena, int x, int y) {
+bool isTilePointInBounds(struct TileArena* tileArena, int x, int y) {
 	return x >= 0 && x < tileArena->arenaWidth && y >= 0 && y < tileArena->arenaHeight;
 }
 

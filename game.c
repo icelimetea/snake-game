@@ -59,7 +59,7 @@ fail:
 	return NULL;
 }
 
-int addPlayer(struct World* world, struct Player* player) {
+bool addPlayer(struct World* world, struct Player* player) {
 	if (world->numPlayers >= world->playersCapacity) {
 		int oldCapacity = world->playersCapacity;
 		int newCapacity = 2 * oldCapacity;
@@ -67,7 +67,7 @@ int addPlayer(struct World* world, struct Player* player) {
 		struct Player** reallocated = realloc(world->players, newCapacity * sizeof(struct Player*));
 
 		if (reallocated == NULL)
-			return 1;
+			return false;
 
 		world->players = reallocated;
 		world->playersCapacity = newCapacity;
@@ -76,7 +76,7 @@ int addPlayer(struct World* world, struct Player* player) {
 	world->players[world->numPlayers] = player;
 	world->numPlayers++;
 
-	return 0;
+	return true;
 }
 
 void updateWorld(struct World* world) {
@@ -118,7 +118,7 @@ void freeWorld(struct World* world) {
 
 // Internal
 
-int appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
+bool appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 	if (player->partsCount >= player->partsCapacity) {
 		int oldCapacity = player->partsCapacity;
 		int newCapacity = 2 * oldCapacity;
@@ -126,7 +126,7 @@ int appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 		struct SnakePart* reallocated = realloc(player->parts, newCapacity * sizeof(struct SnakePart));
 
 		if (reallocated == NULL)
-			return 1;
+			return false;
 
 		int tailElements = player->partsCount - player->headIndex - 1;
 
@@ -144,7 +144,7 @@ int appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 
 	player->partsCount++;
 
-	return 0;
+	return true;
 }
 
 void movePlayerSnakeHead(struct Player* player, struct SnakePart* part) {
@@ -184,7 +184,7 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 
 	player->direction = direction;
 
-	player->dead = 0;
+	player->dead = false;
 
 	player->score = 0;
 
@@ -198,7 +198,8 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 	parts[0].x = spawnX;
 	parts[0].y = spawnY;
 
-	addPlayer(world, player);
+	if (!addPlayer(world, player))
+		goto fail;
 
 	return player;
 fail:
@@ -228,20 +229,19 @@ void updatePlayer(struct Player* player) {
 	struct TileArena* tileArena = getWorldTileArena(player->world);
 
 	if (!isTilePointInBounds(tileArena, nextHead.x, nextHead.y)) {
-		player->dead = 1;
+		player->dead = true;
 		return;
 	}
 
 	WorldTile tile = getTile(tileArena, nextHead.x, nextHead.y);
 
 	if (tile == SNAKE_TILE) {
-		player->dead = 1;
+		player->dead = true;
 		return;
 	}
 
 	if (tile == APPLE_TILE) {
 		generateApple(player->world);
-
 		player->score++;
 	}
 
@@ -252,7 +252,7 @@ void updatePlayer(struct Player* player) {
 	}
 }
 
-int isPlayerDead(struct Player* player) {
+bool isPlayerDead(struct Player* player) {
 	return player->dead;
 }
 

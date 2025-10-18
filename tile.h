@@ -1,6 +1,8 @@
 #ifndef _TILE_H
 #define _TILE_H
 
+#include <stdbool.h>
+
 typedef enum {
 	EMPTY_TILE,
 	SNAKE_TILE,
@@ -16,7 +18,7 @@ struct TileArena {
 
 struct TileArena* createTileArena(int arenaWidth, int arenaHeight);
 
-int isTilePointInBounds(struct TileArena* tileArena, int x, int y);
+bool isTilePointInBounds(struct TileArena* tileArena, int x, int y);
 
 int getTileArenaWidth(struct TileArena* tileArena);
 int getTileArenaHeight(struct TileArena* tileArena);
