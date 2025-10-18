@@ -22,6 +22,26 @@ int updateWorldPlayers(struct World* world, int start, int stop) {
 	return emptySlot - start;
 }
 
+bool addPlayer(struct World* world, struct Player* player) {
+	if (world->numPlayers >= world->playersCapacity) {
+		int oldCapacity = world->playersCapacity;
+		int newCapacity = 2 * oldCapacity;
+
+		struct Player** reallocated = realloc(world->players, newCapacity * sizeof(struct Player*));
+
+		if (reallocated == NULL)
+			return false;
+
+		world->players = reallocated;
+		world->playersCapacity = newCapacity;
+	}
+
+	world->players[world->numPlayers] = player;
+	world->numPlayers++;
+
+	return true;
+}
+
 // Public API
 
 struct World* createWorld(int arenaWidth, int arenaHeight) {
@@ -57,26 +77,6 @@ fail:
 	freeTileArena(tileArena);
 	free(players);
 	return NULL;
-}
-
-bool addPlayer(struct World* world, struct Player* player) {
-	if (world->numPlayers >= world->playersCapacity) {
-		int oldCapacity = world->playersCapacity;
-		int newCapacity = 2 * oldCapacity;
-
-		struct Player** reallocated = realloc(world->players, newCapacity * sizeof(struct Player*));
-
-		if (reallocated == NULL)
-			return false;
-
-		world->players = reallocated;
-		world->playersCapacity = newCapacity;
-	}
-
-	world->players[world->numPlayers] = player;
-	world->numPlayers++;
-
-	return true;
 }
 
 void updateWorld(struct World* world) {

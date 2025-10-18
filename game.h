@@ -24,8 +24,6 @@ struct World {
 
 struct World* createWorld(int arenaWidth, int arenaHeight);
 
-bool addPlayer(struct World* world, struct Player* player);
-
 void updateWorld(struct World* world);
 
 struct TileArena* getWorldTileArena(struct World* world);
