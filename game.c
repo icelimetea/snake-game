@@ -6,6 +6,8 @@
 
 // Internal
 
+void freePlayer(struct Player* player);
+
 int updateWorldPlayers(struct World* world, int start, int stop) {
 	int emptySlot = start;
 
@@ -164,6 +166,14 @@ int getPlayerSnakeLengthLimit(struct Player* player) {
 	return player->score + 1;
 }
 
+void freePlayer(struct Player* player) {
+	if (player == NULL)
+		return;
+
+	free(player->parts);
+	free(player);
+}
+
 // Public API
 
 struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY) {
@@ -208,10 +218,6 @@ fail:
 	return NULL;
 }
 
-void setPlayerDirection(struct Player* player, Direction direction) {
-	player->direction = direction;
-}
-
 void updatePlayer(struct Player* player) {
 	if (player->dead)
 		return;
@@ -252,18 +258,14 @@ void updatePlayer(struct Player* player) {
 	}
 }
 
+void setPlayerDirection(struct Player* player, Direction direction) {
+	player->direction = direction;
+}
+
 bool isPlayerDead(struct Player* player) {
 	return player->dead;
 }
 
 int getPlayerScore(struct Player* player) {
 	return player->score;
-}
-
-void freePlayer(struct Player* player) {
-	if (player == NULL)
-		return;
-
-	free(player->parts);
-	free(player);
 }

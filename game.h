@@ -11,6 +11,7 @@
 struct Player;
 
 #define INITIAL_PLAYER_CAPACITY 4
+
 #define MAX_APPLE_GENERATION_ATTEMPTS 5
 
 struct World {
@@ -67,14 +68,12 @@ struct Player {
 
 struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY);
 
-void setPlayerDirection(struct Player* player, Direction direction);
-
 void updatePlayer(struct Player* player);
+
+void setPlayerDirection(struct Player* player, Direction direction);
 
 bool isPlayerDead(struct Player* player);
 
 int getPlayerScore(struct Player* player);
-
-void freePlayer(struct Player* player);
 
 #endif
