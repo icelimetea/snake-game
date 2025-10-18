@@ -1,5 +1,7 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include <termios.h>
 #include "game.h"
 
@@ -25,6 +27,8 @@ void render(struct TileArena* tileArena) {
 }
 
 int main(void) {
+	srand(time(NULL));
+
 	struct World* world = createWorld(ARENA_WIDTH, ARENA_HEIGHT);
 
 	if (world == NULL)
