@@ -15,7 +15,7 @@ struct Player;
 #define MAX_APPLE_GENERATION_ATTEMPTS 5
 
 struct World {
-	int numPlayers;
+	int playersCount;
 	int playersCapacity;
 
 	struct Player** players;
@@ -52,11 +52,11 @@ struct SnakePart {
 struct Player {
 	struct World* world;
 
-	Direction direction;
-
-	bool dead;
-
-	int score;
+	struct {
+		Direction direction;
+		bool dead;
+		int score;
+	} properties;
 
 	int partsCount;
 	int partsCapacity;

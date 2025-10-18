@@ -8,24 +8,8 @@
 
 void freePlayer(struct Player* player);
 
-int updateWorldPlayers(struct World* world, int start, int stop) {
-	int emptySlot = start;
-
-	for (int idx = start; idx < stop; idx++) {
-		if (!isPlayerDead(world->players[idx])) {
-			updatePlayer(world->players[idx]);
-			world->players[emptySlot] = world->players[idx];
-			emptySlot++;
-		} else {
-			freePlayer(world->players[idx]);
-		}
-	}
-
-	return emptySlot - start;
-}
-
 bool addPlayer(struct World* world, struct Player* player) {
-	if (world->numPlayers >= world->playersCapacity) {
+	if (world->playersCount >= world->playersCapacity) {
 		int oldCapacity = world->playersCapacity;
 		int newCapacity = 2 * oldCapacity;
 
@@ -38,8 +22,8 @@ bool addPlayer(struct World* world, struct Player* player) {
 		world->playersCapacity = newCapacity;
 	}
 
-	world->players[world->numPlayers] = player;
-	world->numPlayers++;
+	world->players[world->playersCount] = player;
+	world->playersCount++;
 
 	return true;
 }
@@ -66,7 +50,7 @@ struct World* createWorld(int arenaWidth, int arenaHeight) {
 	if (tileArena == NULL)
 		goto fail;
 
-	world->numPlayers = 0;
+	world->playersCount = 0;
 	world->playersCapacity = INITIAL_PLAYER_CAPACITY;
 
 	world->players = players;
@@ -82,7 +66,20 @@ fail:
 }
 
 void updateWorld(struct World* world) {
-	world->numPlayers = updateWorldPlayers(world, 0, world->numPlayers);
+	int emptySlot = 0;
+
+	for (int idx = 0; idx < world->playersCount; idx++) {
+		updatePlayer(world->players[idx]);
+
+		if (!isPlayerDead(world->players[idx])) {
+			world->players[emptySlot] = world->players[idx];
+			emptySlot++;
+		} else {
+			freePlayer(world->players[idx]);
+		}
+	}
+
+	world->playersCount = emptySlot;
 }
 
 struct TileArena* getWorldTileArena(struct World* world) {
@@ -108,7 +105,7 @@ void freeWorld(struct World* world) {
 	if (world == NULL)
 		return;
 
-	for (int idx = 0; idx < world->numPlayers; idx++)
+	for (int idx = 0; idx < world->playersCount; idx++)
 		freePlayer(world->players[idx]);
 
 	free(world->players);
@@ -163,7 +160,7 @@ void movePlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 }
 
 int getPlayerSnakeLengthLimit(struct Player* player) {
-	return player->score + 1;
+	return player->properties.score + 1;
 }
 
 void freePlayer(struct Player* player) {
@@ -192,11 +189,9 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 
 	player->world = world;
 
-	player->direction = direction;
-
-	player->dead = false;
-
-	player->score = 0;
+	player->properties.direction = direction;
+	player->properties.dead = false;
+	player->properties.score = 0;
 
 	player->partsCount = 1;
 	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
@@ -219,13 +214,13 @@ fail:
 }
 
 void updatePlayer(struct Player* player) {
-	if (player->dead)
+	if (player->properties.dead)
 		return;
 
 	struct SnakePart currHead = player->parts[player->headIndex];
 	struct SnakePart nextHead;
 
-	switch (player->direction) {
+	switch (player->properties.direction) {
 	case UP:    nextHead.x = currHead.x; nextHead.y = currHead.y - 1; break;
 	case DOWN:  nextHead.x = currHead.x; nextHead.y = currHead.y + 1; break;
 	case LEFT:  nextHead.x = currHead.x - 1; nextHead.y = currHead.y; break;
@@ -235,20 +230,20 @@ void updatePlayer(struct Player* player) {
 	struct TileArena* tileArena = getWorldTileArena(player->world);
 
 	if (!isTilePointInBounds(tileArena, nextHead.x, nextHead.y)) {
-		player->dead = true;
+		player->properties.dead = true;
 		return;
 	}
 
 	WorldTile tile = getTile(tileArena, nextHead.x, nextHead.y);
 
 	if (tile == SNAKE_TILE) {
-		player->dead = true;
+		player->properties.dead = true;
 		return;
 	}
 
 	if (tile == APPLE_TILE) {
 		generateApple(player->world);
-		player->score++;
+		player->properties.score++;
 	}
 
 	if (player->partsCount < getPlayerSnakeLengthLimit(player)) {
@@ -259,13 +254,13 @@ void updatePlayer(struct Player* player) {
 }
 
 void setPlayerDirection(struct Player* player, Direction direction) {
-	player->direction = direction;
+	player->properties.direction = direction;
 }
 
 bool isPlayerDead(struct Player* player) {
-	return player->dead;
+	return player->properties.dead;
 }
 
 int getPlayerScore(struct Player* player) {
-	return player->score;
+	return player->properties.score;
 }
