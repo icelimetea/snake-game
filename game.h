@@ -71,10 +71,15 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 void updatePlayer(struct Player* player);
 
 void setPlayerDirection(struct Player* player, Direction direction);
+Direction getPlayerDirection(struct Player* player);
 
+void markPlayerAsDead(struct Player* player);
 bool isPlayerDead(struct Player* player);
 
+void incrementPlayerScore(struct Player* player);
 int getPlayerScore(struct Player* player);
+
+void resetProperties(struct Player* player);
 
 void freePlayer(struct Player* player);
 
