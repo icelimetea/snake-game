@@ -69,9 +69,8 @@ void updateWorld(struct World* world) {
 	int emptySlot = 0;
 
 	for (int idx = 0; idx < world->playersCount; idx++) {
-		updatePlayer(world->players[idx]);
-
 		if (!isPlayerDead(world->players[idx])) {
+			updatePlayer(world->players[idx]);
 			world->players[emptySlot] = world->players[idx];
 			emptySlot++;
 		} else {
