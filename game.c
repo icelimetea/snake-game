@@ -128,9 +128,6 @@ bool appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 		player->partsCapacity = newCapacity;
 	}
 
-	struct TileArena* tileArena = getWorldTileArena(player->world);
-	setTile(tileArena, part->x, part->y, SNAKE_TILE);
-
 	player->headIndex = (player->headIndex + 1) % player->partsCapacity;
 	player->parts[player->headIndex] = *part;
 
@@ -139,17 +136,13 @@ bool appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 	return true;
 }
 
-void movePlayerSnakeHead(struct Player* player, struct SnakePart* part) {
-	int currTail = (player->headIndex + player->partsCapacity - (player->partsCount - 1)) % player->partsCapacity;
-	int nextHead = (player->headIndex + 1) % player->partsCapacity;
+struct SnakePart movePlayerSnakeHead(struct Player* player, struct SnakePart* part) {
+	struct SnakePart evicted = player->parts[(player->headIndex + player->partsCapacity - (player->partsCount - 1)) % player->partsCapacity];
 
-	struct TileArena* tileArena = getWorldTileArena(player->world);
-
-	setTile(tileArena, player->parts[currTail].x, player->parts[currTail].y, EMPTY_TILE);
-	setTile(tileArena, part->x, part->y, SNAKE_TILE);
-
-	player->headIndex = nextHead;
+	player->headIndex = (player->headIndex + 1) % player->partsCapacity;
 	player->parts[player->headIndex] = *part;
+
+	return evicted;
 }
 
 int getPlayerSnakeLengthLimit(struct Player* player) {
@@ -234,8 +227,11 @@ void updatePlayer(struct Player* player) {
 	if (player->partsCount < getPlayerSnakeLengthLimit(player)) {
 		appendPlayerSnakeHead(player, &nextHead);
 	} else {
-		movePlayerSnakeHead(player, &nextHead);
+		struct SnakePart prevTail = movePlayerSnakeHead(player, &nextHead);
+		setTile(tileArena, prevTail.x, prevTail.y, EMPTY_TILE);
 	}
+
+	setTile(tileArena, nextHead.x, nextHead.y, SNAKE_TILE);
 }
 
 void setPlayerDirection(struct Player* player, Direction direction) {
