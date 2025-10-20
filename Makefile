@@ -1,5 +1,10 @@
 CFLAGS+=-Wall -Wextra -Wpedantic -Werror
-CFLAGS+=-O3 -march=native -flto
+
+ifeq (${BUILD},Release)
+	CFLAGS+=-O3 -march=native -flto
+else
+	CFLAGS+=-O2 -g
+endif
 
 OBJS=main.o game.o tile.o
 

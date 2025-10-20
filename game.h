@@ -76,4 +76,6 @@ bool isPlayerDead(struct Player* player);
 
 int getPlayerScore(struct Player* player);
 
+void freePlayer(struct Player* player);
+
 #endif

@@ -75,6 +75,7 @@ int main(void) {
 
 	tcsetattr(STDOUT_FILENO, 0, &origConf);
 
-	freeWorld(world);	
+	freeWorld(world);
+	freePlayer(player);
 	return 0;
 }

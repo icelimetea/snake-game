@@ -6,8 +6,6 @@
 
 // Internal
 
-void freePlayer(struct Player* player);
-
 bool addPlayer(struct World* world, struct Player* player) {
 	if (world->playersCount >= world->playersCapacity) {
 		int oldCapacity = world->playersCapacity;
@@ -69,12 +67,11 @@ void updateWorld(struct World* world) {
 	int emptySlot = 0;
 
 	for (int idx = 0; idx < world->playersCount; idx++) {
+		updatePlayer(world->players[idx]);
+
 		if (!isPlayerDead(world->players[idx])) {
-			updatePlayer(world->players[idx]);
 			world->players[emptySlot] = world->players[idx];
 			emptySlot++;
-		} else {
-			freePlayer(world->players[idx]);
 		}
 	}
 
@@ -103,9 +100,6 @@ void generateApple(struct World* world) {
 void freeWorld(struct World* world) {
 	if (world == NULL)
 		return;
-
-	for (int idx = 0; idx < world->playersCount; idx++)
-		freePlayer(world->players[idx]);
 
 	free(world->players);
 	freeTileArena(world->tileArena);
@@ -160,14 +154,6 @@ void movePlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 
 int getPlayerSnakeLengthLimit(struct Player* player) {
 	return player->properties.score + 1;
-}
-
-void freePlayer(struct Player* player) {
-	if (player == NULL)
-		return;
-
-	free(player->parts);
-	free(player);
 }
 
 // Public API
@@ -262,4 +248,12 @@ bool isPlayerDead(struct Player* player) {
 
 int getPlayerScore(struct Player* player) {
 	return player->properties.score;
+}
+
+void freePlayer(struct Player* player) {
+	if (player == NULL)
+		return;
+
+	free(player->parts);
+	free(player);
 }
