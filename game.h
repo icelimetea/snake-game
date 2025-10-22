@@ -49,15 +49,18 @@ struct SnakePart {
 	int y;
 };
 
+struct PlayerProperties {
+	Direction direction;
+	bool dead;
+	int score;
+};
+
 struct Player {
 	struct World* world;
 
-	struct {
-		Direction direction;
-		bool dead;
-		int score;
-		int refcount;
-	} properties;
+	int refcount;
+
+	struct PlayerProperties properties;
 
 	int partsCount;
 	int partsCapacity;
@@ -69,16 +72,13 @@ struct Player {
 
 struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY);
 
-void updatePlayer(struct Player* player);
+bool updatePlayer(struct Player* player);
 
 void setPlayerDirection(struct Player* player, Direction direction);
-Direction getPlayerDirection(struct Player* player);
-
 void markPlayerAsDead(struct Player* player);
-bool isPlayerDead(struct Player* player);
-
 void incrementPlayerScore(struct Player* player);
-int getPlayerScore(struct Player* player);
+
+struct PlayerProperties getPlayerProperties(struct Player* player);
 
 void leakPlayer(struct Player* player);
 void freePlayer(struct Player* player);

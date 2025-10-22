@@ -69,9 +69,7 @@ void updateWorld(struct World* world) {
 	int emptySlot = 0;
 
 	for (int idx = 0; idx < world->playersCount; idx++) {
-		updatePlayer(world->players[idx]);
-
-		if (!isPlayerDead(world->players[idx])) {
+		if (updatePlayer(world->players[idx])) {
 			world->players[emptySlot] = world->players[idx];
 			emptySlot++;
 		} else {
@@ -152,10 +150,6 @@ struct SnakePart movePlayerSnakeHead(struct Player* player, struct SnakePart* pa
 	return evicted;
 }
 
-int getPlayerSnakeLengthLimit(struct Player* player) {
-	return getPlayerScore(player) + 1;
-}
-
 // Public API
 
 struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY) {
@@ -174,11 +168,11 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 
 	player->world = world;
 
-	setPlayerDirection(player, direction);
+	player->refcount = 1;
 
+	setPlayerDirection(player, direction);
 	player->properties.dead = false;
 	player->properties.score = 0;
-	player->properties.refcount = 1;
 
 	player->partsCount = 1;
 	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
@@ -200,14 +194,16 @@ fail:
 	return NULL;
 }
 
-void updatePlayer(struct Player* player) {
-	if (isPlayerDead(player))
-		return;
+bool updatePlayer(struct Player* player) {
+	struct PlayerProperties props = getPlayerProperties(player);
+
+	if (props.dead)
+		return false;
 
 	struct SnakePart currHead = player->parts[player->headIndex];
 	struct SnakePart nextHead;
 
-	switch (getPlayerDirection(player)) {
+	switch (props.direction) {
 	case UP:    nextHead.x = currHead.x; nextHead.y = currHead.y - 1; break;
 	case DOWN:  nextHead.x = currHead.x; nextHead.y = currHead.y + 1; break;
 	case LEFT:  nextHead.x = currHead.x - 1; nextHead.y = currHead.y; break;
@@ -218,14 +214,14 @@ void updatePlayer(struct Player* player) {
 
 	if (!isTilePointInBounds(tileArena, nextHead.x, nextHead.y)) {
 		markPlayerAsDead(player);
-		return;
+		return false;
 	}
 
 	WorldTile tile = getTile(tileArena, nextHead.x, nextHead.y);
 
 	if (tile == SNAKE_TILE) {
 		markPlayerAsDead(player);
-		return;
+		return false;
 	}
 
 	if (tile == APPLE_TILE) {
@@ -233,7 +229,7 @@ void updatePlayer(struct Player* player) {
 		incrementPlayerScore(player);
 	}
 
-	if (player->partsCount < getPlayerSnakeLengthLimit(player)) {
+	if (player->partsCount < props.score + 1) {
 		appendPlayerSnakeHead(player, &nextHead);
 	} else {
 		struct SnakePart prevTail = movePlayerSnakeHead(player, &nextHead);
@@ -241,43 +237,37 @@ void updatePlayer(struct Player* player) {
 	}
 
 	setTile(tileArena, nextHead.x, nextHead.y, SNAKE_TILE);
+
+	return true;
 }
 
 void setPlayerDirection(struct Player* player, Direction direction) {
 	player->properties.direction = direction;
 }
 
-Direction getPlayerDirection(struct Player* player) {
-	return player->properties.direction;
-}
-
 void markPlayerAsDead(struct Player* player) {
 	player->properties.dead = true;
-}
-
-bool isPlayerDead(struct Player* player) {
-	return player->properties.dead;
 }
 
 void incrementPlayerScore(struct Player* player) {
 	player->properties.score++;
 }
 
-int getPlayerScore(struct Player* player) {
-	return player->properties.score;
+struct PlayerProperties getPlayerProperties(struct Player* player) {
+	return player->properties;
 }
 
 void leakPlayer(struct Player* player) {
-	player->properties.refcount++;
+	player->refcount++;
 }
 
 void freePlayer(struct Player* player) {
 	if (player == NULL)
 		return;
 
-	player->properties.refcount--;
+	player->refcount--;
 
-	if (player->properties.refcount == 0) {
+	if (player->refcount == 0) {
 		free(player->parts);
 		free(player);
 	}

@@ -55,7 +55,9 @@ int main(void) {
 
 	char ch;
 
-	while (!isPlayerDead(player)) {
+	struct PlayerProperties props;
+
+	do {
 		if (read(STDIN_FILENO, &ch, 1)) {
 			switch (ch) {
 			case 'w': setPlayerDirection(player, UP); break;
@@ -67,11 +69,13 @@ int main(void) {
 
 		updateWorld(world);
 
+		props = getPlayerProperties(player);
+
 		render(getWorldTileArena(world));
-		printf("Score: %d\n", getPlayerScore(player));
+		printf("Score: %d\n", props.score);
 
 		usleep(1000 * FRAME_DELAY_MS);
-	}
+	} while (!props.dead);
 
 	tcsetattr(STDOUT_FILENO, 0, &origConf);
 
