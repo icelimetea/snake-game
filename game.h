@@ -50,9 +50,9 @@ struct PlayerProperties {
 };
 
 struct Player {
-	struct World* world;
-
 	struct Player* next;
+
+	struct World* world;
 
 	int refcount;
 
