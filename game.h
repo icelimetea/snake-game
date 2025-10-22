@@ -29,7 +29,8 @@ void freeWorld(struct World* world);
 
 // Player
 
-#define INITIAL_SNAKE_PARTS_CAPACITY 4
+// Must be a power of two
+#define INITIAL_SNAKE_PARTS_CAPACITY (1 << 2)
 
 typedef enum {
 	UP,

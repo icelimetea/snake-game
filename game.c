@@ -136,6 +136,10 @@ fail:
 	return NULL;
 }
 
+int getPlayerSnakePartIndex(struct Player* player, int offset) {
+	return (player->headIndex + offset) & (player->partsCapacity - 1);
+}
+
 bool appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 	if (player->partsCount >= player->partsCapacity) {
 		int oldCapacity = player->partsCapacity;
@@ -154,7 +158,7 @@ bool appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 		player->partsCapacity = newCapacity;
 	}
 
-	player->headIndex = (player->headIndex + 1) % player->partsCapacity;
+	player->headIndex = getPlayerSnakePartIndex(player, 1);
 	player->parts[player->headIndex] = *part;
 
 	player->partsCount++;
@@ -163,9 +167,9 @@ bool appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 }
 
 struct SnakePart movePlayerSnakeHead(struct Player* player, struct SnakePart* part) {
-	struct SnakePart evicted = player->parts[(player->headIndex + player->partsCapacity - (player->partsCount - 1)) % player->partsCapacity];
+	struct SnakePart evicted = player->parts[getPlayerSnakePartIndex(player, -(player->partsCount - 1))];
 
-	player->headIndex = (player->headIndex + 1) % player->partsCapacity;
+	player->headIndex = getPlayerSnakePartIndex(player, 1);
 	player->parts[player->headIndex] = *part;
 
 	return evicted;
