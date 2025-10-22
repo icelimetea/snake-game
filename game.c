@@ -20,6 +20,8 @@ bool addPlayer(struct World* world, struct Player* player) {
 		world->playersCapacity = newCapacity;
 	}
 
+	leakPlayer(player);
+
 	world->players[world->playersCount] = player;
 	world->playersCount++;
 
@@ -72,6 +74,8 @@ void updateWorld(struct World* world) {
 		if (!isPlayerDead(world->players[idx])) {
 			world->players[emptySlot] = world->players[idx];
 			emptySlot++;
+		} else {
+			freePlayer(world->players[idx]);
 		}
 	}
 
@@ -100,6 +104,9 @@ void generateApple(struct World* world) {
 void freeWorld(struct World* world) {
 	if (world == NULL)
 		return;
+
+	for (int idx = 0; idx < world->playersCount; idx++)
+		freePlayer(world->players[idx]);
 
 	free(world->players);
 	freeTileArena(world->tileArena);
@@ -167,8 +174,11 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 
 	player->world = world;
 
-	resetProperties(player);
 	setPlayerDirection(player, direction);
+
+	player->properties.dead = false;
+	player->properties.score = 0;
+	player->properties.refcount = 1;
 
 	player->partsCount = 1;
 	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
@@ -257,15 +267,18 @@ int getPlayerScore(struct Player* player) {
 	return player->properties.score;
 }
 
-void resetProperties(struct Player* player) {
-	player->properties.score = 0;
-	player->properties.dead = false;
+void leakPlayer(struct Player* player) {
+	player->properties.refcount++;
 }
 
 void freePlayer(struct Player* player) {
 	if (player == NULL)
 		return;
 
-	free(player->parts);
-	free(player);
+	player->properties.refcount--;
+
+	if (player->properties.refcount == 0) {
+		free(player->parts);
+		free(player);
+	}
 }

@@ -56,6 +56,7 @@ struct Player {
 		Direction direction;
 		bool dead;
 		int score;
+		int refcount;
 	} properties;
 
 	int partsCount;
@@ -79,8 +80,7 @@ bool isPlayerDead(struct Player* player);
 void incrementPlayerScore(struct Player* player);
 int getPlayerScore(struct Player* player);
 
-void resetProperties(struct Player* player);
-
+void leakPlayer(struct Player* player);
 void freePlayer(struct Player* player);
 
 #endif
