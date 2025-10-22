@@ -4,35 +4,8 @@
 
 // World
 
-// Internal
-
-bool addPlayer(struct World* world, struct Player* player) {
-	if (world->playersCount >= world->playersCapacity) {
-		int oldCapacity = world->playersCapacity;
-		int newCapacity = 2 * oldCapacity;
-
-		struct Player** reallocated = realloc(world->players, newCapacity * sizeof(struct Player*));
-
-		if (reallocated == NULL)
-			return false;
-
-		world->players = reallocated;
-		world->playersCapacity = newCapacity;
-	}
-
-	leakPlayer(player);
-
-	world->players[world->playersCount] = player;
-	world->playersCount++;
-
-	return true;
-}
-
-// Public API
-
 struct World* createWorld(int arenaWidth, int arenaHeight) {
 	struct World* world = NULL;
-	struct Player** players = NULL;
 	struct TileArena* tileArena = NULL;
 
 	world = malloc(sizeof(struct World));
@@ -40,44 +13,49 @@ struct World* createWorld(int arenaWidth, int arenaHeight) {
 	if (world == NULL)
 		goto fail;
 
-	players = malloc(INITIAL_PLAYER_CAPACITY * sizeof(struct Player*));
-
-	if (players == NULL)
-		goto fail;
-
 	tileArena = createTileArena(arenaWidth, arenaHeight);
 
 	if (tileArena == NULL)
 		goto fail;
 
-	world->playersCount = 0;
-	world->playersCapacity = INITIAL_PLAYER_CAPACITY;
-
-	world->players = players;
-
+	world->players = NULL;
 	world->tileArena = tileArena;
 
 	return world;
 fail:
 	free(world);
 	freeTileArena(tileArena);
-	free(players);
 	return NULL;
 }
 
-void updateWorld(struct World* world) {
-	int emptySlot = 0;
+void addPlayer(struct World* world, struct Player* player) {
+	player->next = world->players;
+	world->players = player;
+	leakPlayer(player);
+}
 
-	for (int idx = 0; idx < world->playersCount; idx++) {
-		if (updatePlayer(world->players[idx])) {
-			world->players[emptySlot] = world->players[idx];
-			emptySlot++;
-		} else {
-			freePlayer(world->players[idx]);
-		}
+void updateWorld(struct World* world) {
+	struct Player* player = world->players;
+
+	while (player != NULL && !updatePlayer(player)) {
+		world->players = player->next;
+		freePlayer(player);
+
+		player = world->players;
 	}
 
-	world->playersCount = emptySlot;
+	if (player == NULL)
+		return;
+
+	while (player->next != NULL) {
+		if (!updatePlayer(player->next)) {
+			struct Player* pivot = player->next;
+			player->next = pivot->next;
+			freePlayer(pivot);
+		} else {
+			player = player->next;
+		}
+	}
 }
 
 struct TileArena* getWorldTileArena(struct World* world) {
@@ -103,17 +81,60 @@ void freeWorld(struct World* world) {
 	if (world == NULL)
 		return;
 
-	for (int idx = 0; idx < world->playersCount; idx++)
-		freePlayer(world->players[idx]);
+	struct Player* player = world->players;
 
-	free(world->players);
+	while (player != NULL) {
+		struct Player* next = player->next;
+		freePlayer(player);
+		player = next;
+	}
+
 	freeTileArena(world->tileArena);
 	free(world);
 }
 
 // Players
 
-// Internal
+struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY) {
+	struct Player* player = NULL;
+	struct SnakePart* parts = NULL;
+
+	player = malloc(sizeof(struct Player));
+
+	if (player == NULL)
+		goto fail;
+
+	parts = malloc(INITIAL_SNAKE_PARTS_CAPACITY * sizeof(struct SnakePart));
+
+	if (parts == NULL)
+		goto fail;
+
+	player->world = world;
+
+	player->refcount = 1;
+
+	setPlayerDirection(player, direction);
+	player->properties.dead = false;
+	player->properties.score = 0;
+
+	player->partsCount = 1;
+	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
+
+	player->headIndex = 0;
+
+	player->parts = parts;
+
+	parts[0].x = spawnX;
+	parts[0].y = spawnY;
+
+	addPlayer(world, player);
+
+	return player;
+fail:
+	free(player);
+	free(parts);
+	return NULL;
+}
 
 bool appendPlayerSnakeHead(struct Player* player, struct SnakePart* part) {
 	if (player->partsCount >= player->partsCapacity) {
@@ -148,50 +169,6 @@ struct SnakePart movePlayerSnakeHead(struct Player* player, struct SnakePart* pa
 	player->parts[player->headIndex] = *part;
 
 	return evicted;
-}
-
-// Public API
-
-struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY) {
-	struct Player* player = NULL;
-	struct SnakePart* parts = NULL;
-
-	player = malloc(sizeof(struct Player));
-
-	if (player == NULL)
-		goto fail;
-
-	parts = malloc(INITIAL_SNAKE_PARTS_CAPACITY * sizeof(struct SnakePart));
-
-	if (parts == NULL)
-		goto fail;
-
-	player->world = world;
-
-	player->refcount = 1;
-
-	setPlayerDirection(player, direction);
-	player->properties.dead = false;
-	player->properties.score = 0;
-
-	player->partsCount = 1;
-	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
-
-	player->headIndex = 0;
-
-	player->parts = parts;
-
-	parts[0].x = spawnX;
-	parts[0].y = spawnY;
-
-	if (!addPlayer(world, player))
-		goto fail;
-
-	return player;
-fail:
-	free(player);
-	free(parts);
-	return NULL;
 }
 
 bool updatePlayer(struct Player* player) {

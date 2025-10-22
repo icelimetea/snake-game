@@ -10,16 +10,10 @@
 
 struct Player;
 
-#define INITIAL_PLAYER_CAPACITY 4
-
 #define MAX_APPLE_GENERATION_ATTEMPTS 5
 
 struct World {
-	int playersCount;
-	int playersCapacity;
-
-	struct Player** players;
-
+	struct Player* players;
 	struct TileArena* tileArena;
 };
 
@@ -57,6 +51,8 @@ struct PlayerProperties {
 
 struct Player {
 	struct World* world;
+
+	struct Player* next;
 
 	int refcount;
 
