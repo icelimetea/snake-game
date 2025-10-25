@@ -21,9 +21,9 @@ struct World* createWorld(int arenaWidth, int arenaHeight);
 
 void updateWorld(struct World* world);
 
-struct TileArena* getWorldTileArena(struct World* world);
-
 void generateApple(struct World* world);
+
+struct TileArena* getWorldTileArena(struct World* world);
 
 void freeWorld(struct World* world);
 

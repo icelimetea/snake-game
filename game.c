@@ -29,9 +29,9 @@ fail:
 }
 
 void addPlayer(struct World* world, struct Player* player) {
+	leakPlayer(player);
 	player->next = world->players;
 	world->players = player;
-	leakPlayer(player);
 }
 
 void updateWorld(struct World* world) {
@@ -40,7 +40,6 @@ void updateWorld(struct World* world) {
 	while (player != NULL && !updatePlayer(player)) {
 		world->players = player->next;
 		freePlayer(player);
-
 		player = world->players;
 	}
 
@@ -58,10 +57,6 @@ void updateWorld(struct World* world) {
 	}
 }
 
-struct TileArena* getWorldTileArena(struct World* world) {
-	return world->tileArena;
-}
-
 void generateApple(struct World* world) {
 	int x;
 	int y;
@@ -75,6 +70,10 @@ void generateApple(struct World* world) {
 	} while (attempts < MAX_APPLE_GENERATION_ATTEMPTS && getTile(world->tileArena, x, y) != EMPTY_TILE);
 
 	setTile(world->tileArena, x, y, APPLE_TILE);
+}
+
+struct TileArena* getWorldTileArena(struct World* world) {
+	return world->tileArena;
 }
 
 void freeWorld(struct World* world) {
