@@ -2,6 +2,7 @@
 #define _GAME_H
 
 #include <stdbool.h>
+#include <stdatomic.h>
 #include "tile.h"
 
 // World
@@ -13,7 +14,7 @@ struct Player;
 #define MAX_APPLE_GENERATION_ATTEMPTS 5
 
 struct World {
-	struct Player* players;
+	_Atomic(struct Player*) players;
 	struct TileArena* tileArena;
 };
 
@@ -45,9 +46,9 @@ struct SnakePart {
 };
 
 struct PlayerProperties {
-	Direction direction;
-	bool dead;
-	int score;
+	_Atomic(Direction) direction;
+	atomic_bool dead;
+	atomic_int score;
 };
 
 struct Player {
@@ -55,7 +56,7 @@ struct Player {
 
 	struct World* world;
 
-	int refcount;
+	atomic_int refcount;
 
 	struct PlayerProperties properties;
 
