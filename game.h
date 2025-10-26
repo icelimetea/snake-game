@@ -6,7 +6,7 @@
 #include "tile.h"
 
 #define CACHE_LINE_SIZE 64
-#define PADDING_FOR_OFFSET(x) (-(x) & (CACHE_LINE_SIZE - 1))
+#define CACHE_LINE_BOUNDARY __attribute__((aligned(CACHE_LINE_SIZE)))
 
 // World
 
@@ -19,8 +19,7 @@ struct Player;
 struct World {
 	_Atomic(struct Player*) players;
 
-	char __pad0[PADDING_FOR_OFFSET(8)];
-
+	CACHE_LINE_BOUNDARY
 	struct TileArena* tileArena;
 };
 
@@ -59,11 +58,9 @@ struct Player {
 	int partsCount;
 	int partsCapacity;
 	int headIndex;
-	int __pad0;
 	struct SnakePart* parts;
 
-	char __pad1[PADDING_FOR_OFFSET(40)];
-
+	CACHE_LINE_BOUNDARY
 	atomic_int refcount;
 	_Atomic(Direction) direction;
 	atomic_int score;
