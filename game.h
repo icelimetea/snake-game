@@ -50,17 +50,15 @@ struct Player {
 
 	struct World* world;
 
+	int partsCount;
+	int partsCapacity;
+	int headIndex;
+	struct SnakePart* parts;
+
 	atomic_int refcount;
 	_Atomic(Direction) direction;
 	atomic_int score;
 	atomic_bool dead;
-
-	int partsCount;
-	int partsCapacity;
-
-	int headIndex;
-
-	struct SnakePart* parts;
 };
 
 struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY);
