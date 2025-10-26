@@ -8,7 +8,7 @@ struct World* createWorld(int arenaWidth, int arenaHeight) {
 	struct World* world = NULL;
 	struct TileArena* tileArena = NULL;
 
-	world = malloc(sizeof(struct World));
+	world = aligned_alloc(CACHE_LINE_SIZE, sizeof(struct World));
 
 	if (world == NULL)
 		goto fail;
@@ -96,7 +96,7 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 	struct Player* player = NULL;
 	struct SnakePart* parts = NULL;
 
-	player = malloc(sizeof(struct Player));
+	player = aligned_alloc(CACHE_LINE_SIZE, sizeof(struct Player));
 
 	if (player == NULL)
 		goto fail;

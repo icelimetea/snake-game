@@ -1,4 +1,4 @@
-CFLAGS+=-Wall -Wextra -Wpedantic -Werror
+CFLAGS+=-Wall -Wextra -Wpedantic -Werror -std=gnu11
 
 ifeq (${BUILD},Release)
 	CFLAGS+=-O3 -march=native -flto
