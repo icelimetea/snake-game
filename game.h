@@ -5,8 +5,8 @@
 #include <stdatomic.h>
 #include "tile.h"
 
-#define PADDING_SIZE 128
-#define PADDING_FOR_OFFSET(x) (-(x) & (PADDING_SIZE - 1))
+#define CACHE_LINE_SIZE 64
+#define PADDING_FOR_OFFSET(x) (-(x) & (CACHE_LINE_SIZE - 1))
 
 // World
 
