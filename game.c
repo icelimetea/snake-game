@@ -109,9 +109,9 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 	player->world = world;
 
 	atomic_init(&player->refcount, 1);
-	atomic_init(&player->properties.direction, direction);
-	atomic_init(&player->properties.dead, false);
-	atomic_init(&player->properties.score, 0);
+	atomic_init(&player->direction, direction);
+	atomic_init(&player->dead, false);
+	atomic_init(&player->score, 0);
 
 	player->partsCount = 1;
 	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
@@ -172,15 +172,13 @@ struct SnakePart movePlayerSnakeHead(struct Player* player, struct SnakePart* pa
 }
 
 bool updatePlayer(struct Player* player) {
-	struct PlayerProperties props = getPlayerProperties(player);
-
-	if (props.dead)
+	if (isPlayerDead(player))
 		return false;
 
 	struct SnakePart currHead = player->parts[player->headIndex];
 	struct SnakePart nextHead;
 
-	switch (props.direction) {
+	switch (getPlayerDirection(player)) {
 	case UP:    nextHead.x = currHead.x; nextHead.y = currHead.y - 1; break;
 	case DOWN:  nextHead.x = currHead.x; nextHead.y = currHead.y + 1; break;
 	case LEFT:  nextHead.x = currHead.x - 1; nextHead.y = currHead.y; break;
@@ -206,7 +204,7 @@ bool updatePlayer(struct Player* player) {
 		incrementPlayerScore(player);
 	}
 
-	if (player->partsCount < props.score + 1) {
+	if (player->partsCount < getPlayerScore(player) + 1) {
 		appendPlayerSnakeHead(player, &nextHead);
 	} else {
 		struct SnakePart prevTail = movePlayerSnakeHead(player, &nextHead);
@@ -219,24 +217,27 @@ bool updatePlayer(struct Player* player) {
 }
 
 void setPlayerDirection(struct Player* player, Direction direction) {
-	atomic_store_explicit(&player->properties.direction, direction, memory_order_relaxed);
+	atomic_store_explicit(&player->direction, direction, memory_order_relaxed);
+}
+
+Direction getPlayerDirection(struct Player* player) {
+	return atomic_load_explicit(&player->direction, memory_order_relaxed);
 }
 
 void markPlayerAsDead(struct Player* player) {
-	atomic_store_explicit(&player->properties.dead, true, memory_order_relaxed);
+	atomic_store_explicit(&player->dead, true, memory_order_relaxed);
+}
+
+bool isPlayerDead(struct Player* player) {
+	return atomic_load_explicit(&player->dead, memory_order_relaxed);
 }
 
 void incrementPlayerScore(struct Player* player) {
-	atomic_fetch_add_explicit(&player->properties.score, 1, memory_order_relaxed);
+	atomic_fetch_add_explicit(&player->score, 1, memory_order_relaxed);
 }
 
-struct PlayerProperties getPlayerProperties(struct Player* player) {
-	struct PlayerProperties props = {
-		.direction = atomic_load_explicit(&player->properties.direction, memory_order_relaxed),
-		.dead = atomic_load_explicit(&player->properties.dead, memory_order_relaxed),
-		.score = atomic_load_explicit(&player->properties.score, memory_order_relaxed)
-	};
-	return props;
+int getPlayerScore(struct Player* player) {
+	return atomic_load_explicit(&player->score, memory_order_relaxed);
 }
 
 void leakPlayer(struct Player* player) {
