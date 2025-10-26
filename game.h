@@ -17,6 +17,7 @@ struct Player;
 #define MAX_APPLE_GENERATION_ATTEMPTS 5
 
 struct World {
+	CACHE_LINE_BOUNDARY
 	_Atomic(struct Player*) players;
 
 	CACHE_LINE_BOUNDARY
@@ -51,6 +52,7 @@ struct SnakePart {
 };
 
 struct Player {
+	CACHE_LINE_BOUNDARY
 	struct Player* next;
 
 	struct World* world;
