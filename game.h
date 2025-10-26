@@ -5,6 +5,9 @@
 #include <stdatomic.h>
 #include "tile.h"
 
+#define PADDING_SIZE 128
+#define PADDING_FOR_OFFSET(x) (-(x) & (PADDING_SIZE - 1))
+
 // World
 
 // Player forward declaration
@@ -15,6 +18,9 @@ struct Player;
 
 struct World {
 	_Atomic(struct Player*) players;
+
+	char __pad0[PADDING_FOR_OFFSET(8)];
+
 	struct TileArena* tileArena;
 };
 
@@ -53,7 +59,10 @@ struct Player {
 	int partsCount;
 	int partsCapacity;
 	int headIndex;
+	int __pad0;
 	struct SnakePart* parts;
+
+	char __pad1[PADDING_FOR_OFFSET(40)];
 
 	atomic_int refcount;
 	_Atomic(Direction) direction;
