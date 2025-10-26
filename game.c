@@ -110,8 +110,8 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 
 	atomic_init(&player->refcount, 1);
 	atomic_init(&player->direction, direction);
-	atomic_init(&player->dead, false);
 	atomic_init(&player->score, 0);
+	atomic_init(&player->dead, false);
 
 	player->partsCount = 1;
 	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
@@ -224,20 +224,20 @@ Direction getPlayerDirection(struct Player* player) {
 	return atomic_load_explicit(&player->direction, memory_order_relaxed);
 }
 
-void markPlayerAsDead(struct Player* player) {
-	atomic_store_explicit(&player->dead, true, memory_order_relaxed);
-}
-
-bool isPlayerDead(struct Player* player) {
-	return atomic_load_explicit(&player->dead, memory_order_relaxed);
-}
-
 void incrementPlayerScore(struct Player* player) {
 	atomic_fetch_add_explicit(&player->score, 1, memory_order_relaxed);
 }
 
 int getPlayerScore(struct Player* player) {
 	return atomic_load_explicit(&player->score, memory_order_relaxed);
+}
+
+void markPlayerAsDead(struct Player* player) {
+	atomic_store_explicit(&player->dead, true, memory_order_release);
+}
+
+bool isPlayerDead(struct Player* player) {
+	return atomic_load_explicit(&player->dead, memory_order_acquire);
 }
 
 void leakPlayer(struct Player* player) {

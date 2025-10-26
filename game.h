@@ -52,8 +52,8 @@ struct Player {
 
 	atomic_int refcount;
 	_Atomic(Direction) direction;
-	atomic_bool dead;
 	atomic_int score;
+	atomic_bool dead;
 
 	int partsCount;
 	int partsCapacity;
@@ -70,11 +70,11 @@ bool updatePlayer(struct Player* player);
 void setPlayerDirection(struct Player* player, Direction direction);
 Direction getPlayerDirection(struct Player* player);
 
-void markPlayerAsDead(struct Player* player);
-bool isPlayerDead(struct Player* player);
-
 void incrementPlayerScore(struct Player* player);
 int getPlayerScore(struct Player* player);
+
+void markPlayerAsDead(struct Player* player);
+bool isPlayerDead(struct Player* player);
 
 void leakPlayer(struct Player* player);
 void freePlayer(struct Player* player);
