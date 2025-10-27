@@ -57,32 +57,35 @@ struct Player {
 
 	struct World* world;
 
+	int sockfd;
+
 	int partsCount;
 	int partsCapacity;
 	int headIndex;
 	struct SnakePart* parts;
 
+	int score;
+
 	CACHE_LINE_BOUNDARY
-	atomic_int refcount;
 	_Atomic(Direction) direction;
-	atomic_int score;
 	atomic_bool dead;
 };
 
-struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY);
+// Thread-safe API
 
-bool updatePlayer(struct Player* player);
+struct Player* createPlayer(struct World* world, int sockfd, Direction direction, int spawnX, int spawnY);
 
 void setPlayerDirection(struct Player* player, Direction direction);
 Direction getPlayerDirection(struct Player* player);
 
-void incrementPlayerScore(struct Player* player);
-int getPlayerScore(struct Player* player);
-
 void markPlayerAsDead(struct Player* player);
 bool isPlayerDead(struct Player* player);
 
-void leakPlayer(struct Player* player);
-void freePlayer(struct Player* player);
+// END: Thread-safe API
+
+bool updatePlayer(struct Player* player);
+
+void incrementPlayerScore(struct Player* player);
+int getPlayerScore(struct Player* player);
 
 #endif

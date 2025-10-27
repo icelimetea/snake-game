@@ -34,7 +34,7 @@ int main(void) {
 	if (world == NULL)
 		return 1;
 
-	struct Player* player = createPlayer(world, UP, ARENA_WIDTH / 2, ARENA_HEIGHT / 2);
+	struct Player* player = createPlayer(world, 0, UP, ARENA_WIDTH / 2, ARENA_HEIGHT / 2);
 
 	if (player == NULL) {
 		freeWorld(world);
@@ -76,6 +76,5 @@ int main(void) {
 	tcsetattr(STDOUT_FILENO, 0, &origConf);
 
 	freeWorld(world);
-	freePlayer(player);
 	return 0;
 }

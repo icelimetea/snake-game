@@ -2,6 +2,10 @@
 #include <string.h>
 #include "game.h"
 
+// Forward declaration of freePlayer function
+
+void freePlayer(struct Player* player);
+
 // World
 
 struct World* createWorld(int arenaWidth, int arenaHeight) {
@@ -30,20 +34,18 @@ fail:
 }
 
 void addPlayer(struct World* world, struct Player* player) {
-	leakPlayer(player);
-
 	player->next = atomic_load_explicit(&world->players, memory_order_relaxed);
 	while (!atomic_compare_exchange_weak_explicit(&world->players, &player->next, player, memory_order_release, memory_order_relaxed))
 		; // CAS happens in the loop conditional, no body is needed
 }
 
 void updateWorld(struct World* world) {
-	struct Player* player = atomic_load_explicit(&world->players, memory_order_acquire);
+	struct Player* head = atomic_load_explicit(&world->players, memory_order_acquire);
 
-	if (player == NULL)
+	if (head == NULL)
 		return;
 
-	updatePlayer(player);
+	struct Player* player = head;
 
 	while (player->next != NULL) {
 		if (!updatePlayer(player->next)) {
@@ -54,6 +56,9 @@ void updateWorld(struct World* world) {
 			player = player->next;
 		}
 	}
+
+	if (!updatePlayer(head) && atomic_compare_exchange_weak_explicit(&world->players, &head, head->next, memory_order_relaxed, memory_order_relaxed))
+		freePlayer(head);
 }
 
 void generateApple(struct World* world) {
@@ -93,7 +98,9 @@ void freeWorld(struct World* world) {
 
 // Players
 
-struct Player* createPlayer(struct World* world, Direction direction, int spawnX, int spawnY) {
+// Thread-safe API
+
+struct Player* createPlayer(struct World* world, int sockfd, Direction direction, int spawnX, int spawnY) {
 	struct Player* player = NULL;
 	struct SnakePart* parts = NULL;
 
@@ -109,10 +116,12 @@ struct Player* createPlayer(struct World* world, Direction direction, int spawnX
 
 	player->world = world;
 
-	atomic_init(&player->refcount, 1);
+	player->sockfd = sockfd;
+
 	atomic_init(&player->direction, direction);
-	atomic_init(&player->score, 0);
 	atomic_init(&player->dead, false);
+
+	player->score = 0;
 
 	player->partsCount = 1;
 	player->partsCapacity = INITIAL_SNAKE_PARTS_CAPACITY;
@@ -132,6 +141,24 @@ fail:
 	free(parts);
 	return NULL;
 }
+
+void setPlayerDirection(struct Player* player, Direction direction) {
+	atomic_store_explicit(&player->direction, direction, memory_order_relaxed);
+}
+
+Direction getPlayerDirection(struct Player* player) {
+	return atomic_load_explicit(&player->direction, memory_order_relaxed);
+}
+
+void markPlayerAsDead(struct Player* player) {
+	atomic_store_explicit(&player->dead, true, memory_order_relaxed);
+}
+
+bool isPlayerDead(struct Player* player) {
+	return atomic_load_explicit(&player->dead, memory_order_relaxed);
+}
+
+// END: Thread-safe API
 
 int getPlayerSnakePartIndex(struct Player* player, int offset) {
 	return (player->headIndex + offset) & (player->partsCapacity - 1);
@@ -190,14 +217,14 @@ bool updatePlayer(struct Player* player) {
 
 	if (!isTilePointInBounds(tileArena, nextHead.x, nextHead.y)) {
 		markPlayerAsDead(player);
-		return false;
+		return true;
 	}
 
 	WorldTile tile = getTile(tileArena, nextHead.x, nextHead.y);
 
 	if (tile == SNAKE_TILE) {
 		markPlayerAsDead(player);
-		return false;
+		return true;
 	}
 
 	if (tile == APPLE_TILE) {
@@ -217,40 +244,18 @@ bool updatePlayer(struct Player* player) {
 	return true;
 }
 
-void setPlayerDirection(struct Player* player, Direction direction) {
-	atomic_store_explicit(&player->direction, direction, memory_order_relaxed);
-}
-
-Direction getPlayerDirection(struct Player* player) {
-	return atomic_load_explicit(&player->direction, memory_order_relaxed);
-}
-
 void incrementPlayerScore(struct Player* player) {
-	atomic_fetch_add_explicit(&player->score, 1, memory_order_relaxed);
+	player->score++;
 }
 
 int getPlayerScore(struct Player* player) {
-	return atomic_load_explicit(&player->score, memory_order_relaxed);
-}
-
-void markPlayerAsDead(struct Player* player) {
-	atomic_store_explicit(&player->dead, true, memory_order_release);
-}
-
-bool isPlayerDead(struct Player* player) {
-	return atomic_load_explicit(&player->dead, memory_order_acquire);
-}
-
-void leakPlayer(struct Player* player) {
-	atomic_fetch_add_explicit(&player->refcount, 1, memory_order_relaxed);
+	return player->score;
 }
 
 void freePlayer(struct Player* player) {
 	if (player == NULL)
 		return;
 
-	if (atomic_fetch_sub_explicit(&player->refcount, 1, memory_order_relaxed) == 1) {
-		free(player->parts);
-		free(player);
-	}
+	free(player->parts);
+	free(player);
 }
