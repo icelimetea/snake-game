@@ -33,7 +33,8 @@ void addPlayer(struct World* world, struct Player* player) {
 	leakPlayer(player);
 
 	player->next = atomic_load_explicit(&world->players, memory_order_relaxed);
-	while (!atomic_compare_exchange_weak_explicit(&world->players, &player->next, player, memory_order_release, memory_order_relaxed));
+	while (!atomic_compare_exchange_weak_explicit(&world->players, &player->next, player, memory_order_release, memory_order_relaxed))
+		; // CAS happens in the loop conditional, no body is needed
 }
 
 void updateWorld(struct World* world) {
