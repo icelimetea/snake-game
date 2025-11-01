@@ -11,8 +11,8 @@ OBJS=main.o game.o tile.o
 snake: ${OBJS}
 	${CC} ${CFLAGS} -o snake ${OBJS}
 
-main.o: main.c game.h tile.h
-game.o: game.c game.h tile.h
+main.o: main.c game.h tile.h utils.h
+game.o: game.c game.h tile.h utils.h
 tile.o: tile.c tile.h
 
 .PHONY: clean

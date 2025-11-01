@@ -4,9 +4,7 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 #include "tile.h"
-
-#define CACHE_LINE_SIZE 64
-#define CACHE_LINE_BOUNDARY __attribute__((aligned(CACHE_LINE_SIZE)))
+#include "utils.h"
 
 // World
 
